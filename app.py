@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import os
-
+from src.cleaning import clean_station_names, process_datetime_columns
 # ------------------------------------------------------------------
 # [User Story 1] Load Raw Data & Inspect Structure
 # Description: Load CSV and display basic structure to verify data integrity.
@@ -27,6 +27,8 @@ else:
     try:
         # Load the dataframe
         df = pd.read_csv(FILE_PATH)
+        df = clean_station_names(df)
+        df = process_datetime_columns(df)
         st.success(f"✅ Successfully loaded data from `{FILE_PATH}`")
         
         # 4. Display Metrics & Preview (Task #15)
