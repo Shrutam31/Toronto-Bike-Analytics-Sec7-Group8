@@ -5,6 +5,8 @@ from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
 from src.analysis import calculate_user_type_percentage
 
+from src.analysis import calculate_user_type_percentage, calculate_avg_duration_by_model
+
 st.set_page_config(page_title="Toronto Bike Share Analytics", layout="wide")
 st.title("🚴 Toronto Bike Share Analytics Tool")
 st.markdown("**Sprint 1: Data Engineering & Inspection**")
@@ -46,6 +48,17 @@ else:
 
     st.subheader("2. Raw Data Preview")
     st.dataframe(df.head())
+
+    st.subheader("2. Trip Duration by Model")
+    m_col1, m_col2 = st.columns(2)
+    
+    with m_col1:
+        avg_iconic = calculate_avg_duration_by_model(df, "ICONIC")
+        st.metric("Avg Duration (ICONIC)", f"{avg_iconic:.1f} min")
+        
+    with m_col2:
+        avg_efit = calculate_avg_duration_by_model(df, "EFIT G5")
+        st.metric("Avg Duration (EFIT G5)", f"{avg_efit:.1f} min")
     
     # Verify Columns
     st.subheader("3. Column Verification")
