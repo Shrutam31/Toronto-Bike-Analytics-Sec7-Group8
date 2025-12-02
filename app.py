@@ -3,6 +3,7 @@ import pandas as pd
 # 1. NEW IMPORT
 from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
+from src.analysis import calculate_user_type_percentage
 
 st.set_page_config(page_title="Toronto Bike Share Analytics", layout="wide")
 st.title("🚴 Toronto Bike Share Analytics Tool")
@@ -26,6 +27,17 @@ else:
     st.success(f"✅ Successfully loaded data from `{FILE_PATH}`")
     
     # Display Metrics
+    st.subheader("1. Key Metrics")
+    col1, col2, col3 = st.columns(3)
+    
+    with col1:
+        st.metric("Total Rows", f"{len(df):,}")
+    with col2:
+        st.metric("Total Columns", len(df.columns))
+    with col3:
+        # DYNAMIC CALCULATION
+        annual_pct = calculate_user_type_percentage(df, "Annual Member")
+        st.metric("Annual Member %", f"{annual_pct:.1f}%")
     col1, col2 = st.columns(2)
     with col1:
         st.metric("Total Rows", f"{len(df):,}")
