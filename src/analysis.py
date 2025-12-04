@@ -22,16 +22,29 @@ def calculate_user_type_percentage(df, user_type):
     
     return (type_count / total_trips) * 100
 
+def get_top_start_stations(df, n=10):
+    """
+    Identifies the top N most popular start stations.
+    
+    Args:
+        df (pd.DataFrame): The dataframe.
+        n (int): Number of stations to return.
+        
+    Returns:
+        pd.DataFrame: A dataframe with 'Start Station Name' and 'Trip Count'.
+    """
+    if df.empty or 'Start Station Name' not in df.columns:
+        return pd.DataFrame(columns=['Start Station Name', 'Trip Count'])
+    
+    # Group by station and count rows
+    station_counts = df['Start Station Name'].value_counts().reset_index()
+    station_counts.columns = ['Start Station Name', 'Trip Count']
+    
+    # Return top N
+    return station_counts.head(n)
 def calculate_avg_duration_by_model(df, model_name):
     """
     Calculates the average trip duration for a specific bike model in MINUTES.
-    
-    Args:
-        df (pd.DataFrame): Dataframe with 'Model' and 'Trip Duration'.
-        model_name (str): The model name (e.g., 'ICONIC').
-        
-    Returns:
-        float: Average duration in minutes.
     """
     # Safety checks
     if df.empty or 'Model' not in df.columns or 'Trip Duration' not in df.columns:
@@ -47,4 +60,4 @@ def calculate_avg_duration_by_model(df, model_name):
     avg_seconds = model_df['Trip Duration'].mean()
     
     # Convert to minutes
-    return avg_seconds / 60
+    return avg_seconds / 60
