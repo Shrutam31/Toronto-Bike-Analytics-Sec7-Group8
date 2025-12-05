@@ -1,71 +1,117 @@
 import streamlit as st
 import pandas as pd
-# 1. NEW IMPORT
+import plotly.express as px
+
+# 1. IMPORTS (Cleaned up)
 from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
-from src.analysis import calculate_user_type_percentage
+from src.analysis import (
+    calculate_user_type_percentage, 
+    calculate_avg_duration_by_model,
+    get_top_start_stations
+)
 
-from src.analysis import calculate_user_type_percentage, calculate_avg_duration_by_model
-
+# 2. PAGE CONFIG
 st.set_page_config(page_title="Toronto Bike Share Analytics", layout="wide")
 st.title("🚴 Toronto Bike Share Analytics Tool")
-st.markdown("**Sprint 1: Data Engineering & Inspection**")
+st.markdown("*Sprint 2: Interactive Dashboard*")
 
 FILE_PATH = "data/bike_data.csv"
 
-st.subheader("1. Data Loading Status")
-
-# 2. REFACTORED LOGIC: Call the function instead of writing raw code
+# 3. LOAD & CLEAN DATA
 df = load_data(FILE_PATH)
 
 if df is None:
-    st.error(f"❌ Error: File not found at `{FILE_PATH}`")
+    st.error(f"❌ Error: File not found at {FILE_PATH}")
     st.stop()
 else:
-    # Apply cleaning (from previous stories)
+    # Apply cleaning
     df = clean_station_names(df)
     df = process_datetime_columns(df)
+
+    # --- USER STORY 8: SIDEBAR FILTERS ---
+    st.sidebar.header("🔍 Filters")
+
+    # A. Month Filter
+    available_months = df['Month'].unique().tolist()
+    selected_month = st.sidebar.selectbox("Select Month", available_months)
+
+    # B. Model Filter
+    available_models = df['Model'].unique().tolist()
+    selected_models = st.sidebar.multiselect("Select Bike Model", available_models, default=available_models)
+
+    # C. Apply Filters (Creating filtered_df)
+    filtered_df = df[
+        (df['Month'] == selected_month) &
+        (df['Model'].isin(selected_models))
+    ]
+
+    # Show warning if empty
+    if filtered_df.empty:
+        st.warning("⚠ No data matches your filters! Please adjust your selection.")
+        st.stop()
+        
+    st.sidebar.success(f"Showing {len(filtered_df):,} trips")
     
-    st.success(f"✅ Successfully loaded data from `{FILE_PATH}`")
-    
-    # Display Metrics
+    # ---------------------------------------------------------
+    # DASHBOARD SECTIONS (Now using filtered_df)
+    # ---------------------------------------------------------
+
+    # 1. KEY METRICS (Story 5)
     st.subheader("1. Key Metrics")
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        st.metric("Total Rows", f"{len(df):,}")
+        # UPDATED: Use filtered_df
+        st.metric("Total Rows", f"{len(filtered_df):,}")
     with col2:
-        st.metric("Total Columns", len(df.columns))
+        # Columns don't change, so df is fine, but technically filtered_df works too
+        st.metric("Total Columns", len(filtered_df.columns))
     with col3:
-        # DYNAMIC CALCULATION
-        annual_pct = calculate_user_type_percentage(df, "Annual Member")
+        # UPDATED: Use filtered_df for dynamic percentage
+        annual_pct = calculate_user_type_percentage(filtered_df, "Annual Member")
         st.metric("Annual Member %", f"{annual_pct:.1f}%")
-    col1, col2 = st.columns(2)
-    with col1:
-        st.metric("Total Rows", f"{len(df):,}")
-    with col2:
-        st.metric("Total Columns", len(df.columns))
 
-    st.subheader("2. Raw Data Preview")
-    st.dataframe(df.head())
-
+    # 2. TRIP DURATION BY MODEL (Story 6)
+    # (Restored this section so your app is complete)
     st.subheader("2. Trip Duration by Model")
     m_col1, m_col2 = st.columns(2)
     
     with m_col1:
-        avg_iconic = calculate_avg_duration_by_model(df, "ICONIC")
+        # UPDATED: Use filtered_df
+        avg_iconic = calculate_avg_duration_by_model(filtered_df, "ICONIC")
         st.metric("Avg Duration (ICONIC)", f"{avg_iconic:.1f} min")
         
     with m_col2:
-        avg_efit = calculate_avg_duration_by_model(df, "EFIT G5")
+        # UPDATED: Use filtered_df
+        avg_efit = calculate_avg_duration_by_model(filtered_df, "EFIT G5")
         st.metric("Avg Duration (EFIT G5)", f"{avg_efit:.1f} min")
+
+    # 3. TOP STATIONS CHART (Story 7)
+    st.markdown("---")
+    st.subheader("3. Most Popular Start Stations")
     
-    # Verify Columns
-    st.subheader("3. Column Verification")
-    required_cols = ["Trip Id", "Start Time", "User Type"]
-    missing = [c for c in required_cols if c not in df.columns]
+    # UPDATED: Use filtered_df
+    top_stations_df = get_top_start_stations(filtered_df, n=10)
     
-    if missing:
-        st.warning(f"⚠️ Missing expected columns: {missing}")
+    if not top_stations_df.empty:
+        fig = px.bar(
+            top_stations_df,
+            x='Trip Count',
+            y='Start Station Name',
+            orientation='h',
+            text='Trip Count',
+            title=f"Top 10 Start Stations ({selected_month})", # Dynamic Title!
+            color='Trip Count',
+            color_continuous_scale='Blues'
+        )
+        fig.update_layout(yaxis={'categoryorder':'total ascending'}, height=500)
+        st.plotly_chart(fig, use_container_width=True)
     else:
-        st.success("✅ Critical columns found.")
+        st.info("Not enough data to show top stations.")
+
+    # 4. DATA PREVIEW
+    st.markdown("---")
+    with st.expander("📂 View Filtered Raw Data"):
+        # UPDATED: Show the filtered data, not the full dataset
+        st.dataframe(filtered_df.head(100))
