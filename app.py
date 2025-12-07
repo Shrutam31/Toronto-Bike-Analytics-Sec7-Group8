@@ -2,14 +2,14 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. IMPORTS (Cleaned up)
+# 1. IMPORTS
 from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
 from src.analysis import (
     calculate_user_type_percentage, 
     calculate_avg_duration_by_model,
     get_top_start_stations,
-    count_trips_by_hour
+    count_trips_by_hour  # <--- NEW IMPORT from Story 9
 )
 
 # 2. PAGE CONFIG
@@ -55,7 +55,7 @@ else:
     st.sidebar.success(f"Showing {len(filtered_df):,} trips")
     
     # ---------------------------------------------------------
-    # DASHBOARD SECTIONS (Now using filtered_df)
+    # DASHBOARD SECTIONS
     # ---------------------------------------------------------
 
     # 1. KEY METRICS (Story 5)
@@ -63,28 +63,22 @@ else:
     col1, col2, col3 = st.columns(3)
     
     with col1:
-        # UPDATED: Use filtered_df
         st.metric("Total Rows", f"{len(filtered_df):,}")
     with col2:
-        # Columns don't change, so df is fine, but technically filtered_df works too
         st.metric("Total Columns", len(filtered_df.columns))
     with col3:
-        # UPDATED: Use filtered_df for dynamic percentage
         annual_pct = calculate_user_type_percentage(filtered_df, "Annual Member")
         st.metric("Annual Member %", f"{annual_pct:.1f}%")
 
     # 2. TRIP DURATION BY MODEL (Story 6)
-    # (Restored this section so your app is complete)
     st.subheader("2. Trip Duration by Model")
     m_col1, m_col2 = st.columns(2)
     
     with m_col1:
-        # UPDATED: Use filtered_df
         avg_iconic = calculate_avg_duration_by_model(filtered_df, "ICONIC")
         st.metric("Avg Duration (ICONIC)", f"{avg_iconic:.1f} min")
         
     with m_col2:
-        # UPDATED: Use filtered_df
         avg_efit = calculate_avg_duration_by_model(filtered_df, "EFIT G5")
         st.metric("Avg Duration (EFIT G5)", f"{avg_efit:.1f} min")
 
@@ -92,7 +86,6 @@ else:
     st.markdown("---")
     st.subheader("3. Most Popular Start Stations")
     
-    # UPDATED: Use filtered_df
     top_stations_df = get_top_start_stations(filtered_df, n=10)
     
     if not top_stations_df.empty:
@@ -102,7 +95,7 @@ else:
             y='Start Station Name',
             orientation='h',
             text='Trip Count',
-            title=f"Top 10 Start Stations ({selected_month})", # Dynamic Title!
+            title=f"Top 10 Start Stations ({selected_month})",
             color='Trip Count',
             color_continuous_scale='Blues'
         )
@@ -110,13 +103,11 @@ else:
         st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("Not enough data to show top stations.")
-    # ... (After Top Stations Chart) ...
 
-    # --- NEW: User Story 9 (Peak Hours Chart) ---
+    # 4. PEAK USAGE HOURS (Story 9) <--- NEW SECTION
     st.markdown("---")
     st.subheader("4. Peak Usage Hours")
     
-    # Aggregate data
     hourly_data = count_trips_by_hour(filtered_df)
     
     if not hourly_data.empty:
@@ -126,20 +117,17 @@ else:
             y='Trip Count',
             title=f"Trips by Hour of Day ({selected_month})",
             labels={'Hour': 'Hour of Day (0-23)', 'Trip Count': 'Number of Trips'},
-            text='Trip Count' # Show numbers on bars
+            text='Trip Count'
         )
-        
-        # Ensure x-axis shows all hours 0-23 clearly
         fig_hourly.update_layout(
             xaxis=dict(tickmode='linear', tick0=0, dtick=1),
             height=450
         )
-        
         st.plotly_chart(fig_hourly, use_container_width=True)
     else:
         st.info("Not enough data to show hourly patterns.")
-    # 4. DATA PREVIEW
+
+    # 5. DATA PREVIEW
     st.markdown("---")
     with st.expander("📂 View Filtered Raw Data"):
-        # UPDATED: Show the filtered data, not the full dataset
         st.dataframe(filtered_df.head(100))
