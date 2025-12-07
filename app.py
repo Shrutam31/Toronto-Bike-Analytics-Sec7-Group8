@@ -111,7 +111,27 @@ else:
         st.info("Not enough data to show top stations.")
 
     # 4. DATA PREVIEW
+    # ... (After Peak Hours Chart) ...
+
+    # 5. DATA PREVIEW & DOWNLOAD (User Story 10)
     st.markdown("---")
-    with st.expander("📂 View Filtered Raw Data"):
-        # UPDATED: Show the filtered data, not the full dataset
+    st.subheader("5. Data Export")
+    
+    with st.expander("📂 View Filtered Raw Data", expanded=True):
+        # Show the data first
         st.dataframe(filtered_df.head(100))
+        
+        # LOGIC FOR DOWNLOAD (Task #46 & #47)
+        # Convert dataframe to CSV string
+        csv_data = filtered_df.to_csv(index=False).encode('utf-8')
+        
+        # Create the filename dynamically based on the month
+        file_name = f"bike_share_data_{selected_month}.csv"
+        
+        st.download_button(
+            label="📥 Download Filtered CSV",
+            data=csv_data,
+            file_name=file_name,
+            mime="text/csv",
+            help="Download the currently filtered dataset for offline analysis."
+        )
