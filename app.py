@@ -2,14 +2,16 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. IMPORTS (Cleaned up)
+# 1. IMPORTS
 from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
 from src.analysis import (
     calculate_user_type_percentage, 
     calculate_avg_duration_by_model,
-    get_top_start_stations
+    get_top_start_stations,
+    count_trips_by_hour  # <--- THIS WAS MISSING
 )
+from src.visualization import plot_top_stations, plot_peak_hours
 
 # 2. PAGE CONFIG
 st.set_page_config(page_title="Toronto Bike Share Analytics", layout="wide")
@@ -87,31 +89,33 @@ else:
         avg_efit = calculate_avg_duration_by_model(filtered_df, "EFIT G5")
         st.metric("Avg Duration (EFIT G5)", f"{avg_efit:.1f} min")
 
-    # 3. TOP STATIONS CHART (Story 7)
+    # 3. TOP STATIONS CHART (Refactored)
     st.markdown("---")
     st.subheader("3. Most Popular Start Stations")
     
-    # UPDATED: Use filtered_df
     top_stations_df = get_top_start_stations(filtered_df, n=10)
     
-    if not top_stations_df.empty:
-        fig = px.bar(
-            top_stations_df,
-            x='Trip Count',
-            y='Start Station Name',
-            orientation='h',
-            text='Trip Count',
-            title=f"Top 10 Start Stations ({selected_month})", # Dynamic Title!
-            color='Trip Count',
-            color_continuous_scale='Blues'
-        )
-        fig.update_layout(yaxis={'categoryorder':'total ascending'}, height=500)
-        st.plotly_chart(fig, use_container_width=True)
+    # CALL THE NEW FUNCTION
+    fig_stations = plot_top_stations(top_stations_df, title_suffix=f"({selected_month})")
+    
+    if fig_stations:
+        st.plotly_chart(fig_stations, use_container_width=True)
     else:
         st.info("Not enough data to show top stations.")
 
-    # 4. DATA PREVIEW
-    # ... (After Peak Hours Chart) ...
+    # 4. PEAK USAGE HOURS (Refactored)
+    st.markdown("---")
+    st.subheader("4. Peak Usage Hours")
+    
+    hourly_data = count_trips_by_hour(filtered_df)
+    
+    # CALL THE NEW FUNCTION
+    fig_hourly = plot_peak_hours(hourly_data, title_suffix=f"({selected_month})")
+    
+    if fig_hourly:
+        st.plotly_chart(fig_hourly, use_container_width=True)
+    else:
+        st.info("Not enough data to show hourly patterns.")
 
     # 5. DATA PREVIEW & DOWNLOAD (User Story 10)
     st.markdown("---")
