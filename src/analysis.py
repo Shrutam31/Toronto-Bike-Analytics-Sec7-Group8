@@ -60,21 +60,4 @@ def calculate_avg_duration_by_model(df, model_name):
     avg_seconds = model_df['Trip Duration'].mean()
     
     # Convert to minutes
-    return avg_seconds / 60
-
-def count_trips_by_hour(df):
-    """
-    Counts the number of trips for each hour of the day (0-23).
-    Returns a dataframe sorted by Hour.
-    """
-    if df.empty or 'Hour' not in df.columns:
-        return pd.DataFrame(columns=['Hour', 'Trip Count'])
-    
-    # Group by Hour and count
-    hourly_counts = df['Hour'].value_counts().reset_index()
-    hourly_counts.columns = ['Hour', 'Trip Count']
-    
-    # Sort by Hour (0 to 23) naturally so the chart is chronological
-    hourly_counts = hourly_counts.sort_values('Hour')
-    
-    return hourly_counts
+    return avg_seconds / 60

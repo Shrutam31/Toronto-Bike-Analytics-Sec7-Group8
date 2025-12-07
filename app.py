@@ -2,20 +2,19 @@ import streamlit as st
 import pandas as pd
 import plotly.express as px
 
-# 1. IMPORTS
+# 1. IMPORTS (Cleaned up)
 from src.loader import load_data
 from src.cleaning import clean_station_names, process_datetime_columns
 from src.analysis import (
     calculate_user_type_percentage, 
     calculate_avg_duration_by_model,
-    get_top_start_stations,
-    count_trips_by_hour  # <--- NEW IMPORT from Story 9
+    get_top_start_stations
 )
 
 # 2. PAGE CONFIG
 st.set_page_config(page_title="Toronto Bike Share Analytics", layout="wide")
 st.title("🚴 Toronto Bike Share Analytics Tool")
-st.markdown("**Sprint 2: Interactive Dashboard**")
+st.markdown("*Sprint 2: Interactive Dashboard*")
 
 FILE_PATH = "data/bike_data.csv"
 
@@ -23,7 +22,7 @@ FILE_PATH = "data/bike_data.csv"
 df = load_data(FILE_PATH)
 
 if df is None:
-    st.error(f"❌ Error: File not found at `{FILE_PATH}`")
+    st.error(f"❌ Error: File not found at {FILE_PATH}")
     st.stop()
 else:
     # Apply cleaning
@@ -49,13 +48,13 @@ else:
 
     # Show warning if empty
     if filtered_df.empty:
-        st.warning("⚠️ No data matches your filters! Please adjust your selection.")
+        st.warning("⚠ No data matches your filters! Please adjust your selection.")
         st.stop()
         
     st.sidebar.success(f"Showing {len(filtered_df):,} trips")
     
     # ---------------------------------------------------------
-    # DASHBOARD SECTIONS
+    # DASHBOARD SECTIONS (Now using filtered_df)
     # ---------------------------------------------------------
 
     # 1. KEY METRICS (Story 5)
@@ -63,22 +62,28 @@ else:
     col1, col2, col3 = st.columns(3)
     
     with col1:
+        # UPDATED: Use filtered_df
         st.metric("Total Rows", f"{len(filtered_df):,}")
     with col2:
+        # Columns don't change, so df is fine, but technically filtered_df works too
         st.metric("Total Columns", len(filtered_df.columns))
     with col3:
+        # UPDATED: Use filtered_df for dynamic percentage
         annual_pct = calculate_user_type_percentage(filtered_df, "Annual Member")
         st.metric("Annual Member %", f"{annual_pct:.1f}%")
 
     # 2. TRIP DURATION BY MODEL (Story 6)
+    # (Restored this section so your app is complete)
     st.subheader("2. Trip Duration by Model")
     m_col1, m_col2 = st.columns(2)
     
     with m_col1:
+        # UPDATED: Use filtered_df
         avg_iconic = calculate_avg_duration_by_model(filtered_df, "ICONIC")
         st.metric("Avg Duration (ICONIC)", f"{avg_iconic:.1f} min")
         
     with m_col2:
+        # UPDATED: Use filtered_df
         avg_efit = calculate_avg_duration_by_model(filtered_df, "EFIT G5")
         st.metric("Avg Duration (EFIT G5)", f"{avg_efit:.1f} min")
 
@@ -86,6 +91,7 @@ else:
     st.markdown("---")
     st.subheader("3. Most Popular Start Stations")
     
+    # UPDATED: Use filtered_df
     top_stations_df = get_top_start_stations(filtered_df, n=10)
     
     if not top_stations_df.empty:
@@ -95,7 +101,7 @@ else:
             y='Start Station Name',
             orientation='h',
             text='Trip Count',
-            title=f"Top 10 Start Stations ({selected_month})",
+            title=f"Top 10 Start Stations ({selected_month})", # Dynamic Title!
             color='Trip Count',
             color_continuous_scale='Blues'
         )
@@ -104,30 +110,8 @@ else:
     else:
         st.info("Not enough data to show top stations.")
 
-    # 4. PEAK USAGE HOURS (Story 9) <--- NEW SECTION
-    st.markdown("---")
-    st.subheader("4. Peak Usage Hours")
-    
-    hourly_data = count_trips_by_hour(filtered_df)
-    
-    if not hourly_data.empty:
-        fig_hourly = px.bar(
-            hourly_data,
-            x='Hour',
-            y='Trip Count',
-            title=f"Trips by Hour of Day ({selected_month})",
-            labels={'Hour': 'Hour of Day (0-23)', 'Trip Count': 'Number of Trips'},
-            text='Trip Count'
-        )
-        fig_hourly.update_layout(
-            xaxis=dict(tickmode='linear', tick0=0, dtick=1),
-            height=450
-        )
-        st.plotly_chart(fig_hourly, use_container_width=True)
-    else:
-        st.info("Not enough data to show hourly patterns.")
-
-    # 5. DATA PREVIEW
+    # 4. DATA PREVIEW
     st.markdown("---")
     with st.expander("📂 View Filtered Raw Data"):
+        # UPDATED: Show the filtered data, not the full dataset
         st.dataframe(filtered_df.head(100))
